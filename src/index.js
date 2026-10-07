@@ -47,7 +47,7 @@ const server = http.createServer((req, res) => {
     res.statusCode = 200;
     res.end(JSON.stringify({
       message: 'Calculator API',
-      version: '1.0.0',
+      version: '1.1.0',
       endpoints: ['/add', '/subtract', '/multiply', '/divide']
     }));
     return;
