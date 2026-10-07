@@ -7,10 +7,16 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const { evaluate } = require('./scientific');
+const { convert, UNITS } = require('./converter');
 
-// Web UI for the calculators
-const indexHtml = fs.readFileSync(path.join(__dirname, 'public', 'index.html'));
-const scientificHtml = fs.readFileSync(path.join(__dirname, 'public', 'scientific.html'));
+// Web pages, keyed by URL path
+const readPage = name => fs.readFileSync(path.join(__dirname, 'public', name));
+const pages = {
+  '/': readPage('home.html'),
+  '/basic': readPage('basic.html'),
+  '/scientific': readPage('scientific.html'),
+  '/converter': readPage('converter.html')
+};
 const notFoundHtml = `<!doctype html>
 <html lang="en">
 <head>
@@ -28,7 +34,12 @@ const notFoundHtml = `<!doctype html>
 </head>
 <body>
   <h1>Page not found</h1>
-  <p><a href="/">Basic calculator</a> <a href="/scientific">Scientific calculator</a></p>
+  <p>
+    <a href="/">Home</a>
+    <a href="/basic">Basic</a>
+    <a href="/scientific">Scientific</a>
+    <a href="/converter">Unit converter</a>
+  </p>
 </body>
 </html>`;
 
@@ -58,17 +69,31 @@ const server = http.createServer((req, res) => {
 
   res.setHeader('Content-Type', 'application/json');
 
-  if (url.pathname === '/') {
+  if (Object.hasOwn(pages, url.pathname)) {
     res.statusCode = 200;
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.end(indexHtml);
+    res.end(pages[url.pathname]);
     return;
   }
 
-  if (url.pathname === '/scientific') {
+  // Unit conversion: /convert?value=5&from=km&to=mi
+  if (url.pathname === '/convert') {
+    try {
+      const value = url.searchParams.get('value');
+      const result = convert(value === null || value.trim() === '' ? NaN : Number(value),
+        url.searchParams.get('from'), url.searchParams.get('to'));
+      res.statusCode = 200;
+      res.end(JSON.stringify({ result }));
+    } catch (error) {
+      res.statusCode = 400;
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return;
+  }
+
+  if (url.pathname === '/units') {
     res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    res.end(scientificHtml);
+    res.end(JSON.stringify(UNITS));
     return;
   }
 
@@ -91,8 +116,8 @@ const server = http.createServer((req, res) => {
     res.statusCode = 200;
     res.end(JSON.stringify({
       message: 'Calculator API',
-      version: '1.2.0',
-      endpoints: ['/add', '/subtract', '/multiply', '/divide', '/evaluate']
+      version: '1.3.0',
+      endpoints: ['/add', '/subtract', '/multiply', '/divide', '/evaluate', '/convert', '/units']
     }));
     return;
   }
@@ -106,7 +131,7 @@ const server = http.createServer((req, res) => {
   const operations = { '/add': add, '/subtract': subtract, '/multiply': multiply, '/divide': divide };
   const operation = operations[url.pathname];
 
-  // Unknown address: show a page with links back to the calculators
+  // Unknown address: show a page with links back to the app
   if (!operation) {
     res.statusCode = 404;
     res.setHeader('Content-Type', 'text/html; charset=utf-8');

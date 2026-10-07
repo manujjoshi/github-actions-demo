@@ -1,6 +1,6 @@
 # Calculator App
 
-A basic and scientific calculator served by a small Node.js server, tested and deployed to [Render](https://render.com) with GitHub Actions.
+A basic calculator, scientific calculator and unit converter served by a small Node.js server, tested and deployed to [Render](https://render.com) with GitHub Actions.
 
 Forked from [shazforiot/github-actions-demo](https://github.com/shazforiot/github-actions-demo).
 
@@ -13,9 +13,13 @@ github-actions-demo/
 │   ├── index.test.js        # Server tests
 │   ├── scientific.js        # Scientific expression evaluator
 │   ├── scientific.test.js   # Evaluator tests
+│   ├── converter.js         # Unit converter
+│   ├── converter.test.js    # Converter tests
 │   └── public/
-│       ├── index.html       # Basic calculator UI
-│       └── scientific.html  # Scientific calculator UI
+│       ├── home.html        # Home page linking to each tool
+│       ├── basic.html       # Basic calculator UI
+│       ├── scientific.html  # Scientific calculator UI
+│       └── converter.html   # Unit converter UI
 ├── .github/
 │   └── workflows/
 │       ├── ci.yml           # Tests on every push and pull request
@@ -37,9 +41,10 @@ npm test
 npm start
 ```
 
-Then open:
-- http://localhost:3000 - basic calculator
-- http://localhost:3000/scientific - scientific calculator
+Then open http://localhost:3000. The home page links to:
+- `/basic` - basic calculator
+- `/scientific` - scientific calculator
+- `/converter` - unit converter (length, weight, temperature)
 
 ## API
 
@@ -47,6 +52,8 @@ Then open:
 |---|---|---|
 | `/add`, `/subtract`, `/multiply`, `/divide` | `/add?a=5&b=3` | `{"result":8}` |
 | `/evaluate` | `/evaluate?expr=2sin(30)%2B5!&angle=deg` | `{"result":121}` |
+| `/convert` | `/convert?value=100&from=c&to=f` | `{"result":212}` |
+| `/units` | `/units` | Unit codes for each category |
 | `/health` | `/health` | `{"status":"healthy"}` |
 | `/api` | `/api` | Name, version and endpoint list |
 

@@ -53,6 +53,14 @@
       padding: 20px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
     }
+    .home {
+      display: inline-block;
+      margin-bottom: 10px;
+      font-size: 14px;
+      color: var(--muted);
+      text-decoration: none;
+    }
+    .home:hover { color: var(--text); }
     .tabs {
       display: flex;
       gap: 4px;
@@ -127,9 +135,11 @@
 </head>
 <body>
   <main class="calc" id="calc">
-    <nav class="tabs" aria-label="Calculators">
-      <a href="/">Basic</a>
+    <a class="home" href="/">← Home</a>
+    <nav class="tabs" aria-label="Tools">
+      <a href="/basic">Basic</a>
       <a href="/scientific" aria-current="page">Scientific</a>
+      <a href="/converter">Converter</a>
     </nav>
     <div class="screen">
       <input class="expr" id="expr" type="text" autocomplete="off" spellcheck="false"

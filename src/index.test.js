@@ -81,22 +81,31 @@ describe('HTTP server', () => {
 
   after(() => server.close());
 
-  test('serves the calculator page at /', async () => {
-    const res = await fetch(`${baseUrl}/`);
-    assert.strictEqual(res.status, 200);
-    assert.match(res.headers.get('content-type'), /text\/html/);
-    assert.match(await res.text(), /<title>Calculator<\/title>/);
+  test('serves each page with its title', async () => {
+    const titles = {
+      '/': 'Calculators',
+      '/basic': 'Calculator',
+      '/scientific': 'Scientific Calculator',
+      '/converter': 'Unit Converter'
+    };
+    for (const [page, title] of Object.entries(titles)) {
+      const res = await fetch(`${baseUrl}${page}`);
+      assert.strictEqual(res.status, 200, page);
+      assert.match(res.headers.get('content-type'), /text\/html/);
+      assert.ok((await res.text()).includes(`<title>${title}</title>`), page);
+    }
+  });
+
+  test('home page links to all three tools', async () => {
+    const html = await (await fetch(`${baseUrl}/`)).text();
+    for (const link of ['/basic', '/scientific', '/converter']) {
+      assert.ok(html.includes(`href="${link}"`), link);
+    }
   });
 
   test('computes via the API', async () => {
     const res = await fetch(`${baseUrl}/multiply?a=6&b=7`);
     assert.deepStrictEqual(await res.json(), { result: 42 });
-  });
-
-  test('serves the scientific calculator page', async () => {
-    const res = await fetch(`${baseUrl}/scientific`);
-    assert.strictEqual(res.status, 200);
-    assert.match(await res.text(), /<title>Scientific Calculator<\/title>/);
   });
 
   test('evaluates scientific expressions', async () => {
@@ -111,12 +120,30 @@ describe('HTTP server', () => {
     assert.deepStrictEqual(await res.json(), { error: 'Incomplete expression' });
   });
 
-  test('both pages link to each other', async () => {
-    for (const page of ['/', '/scientific']) {
+  test('every tool links home and to the other tools', async () => {
+    for (const page of ['/basic', '/scientific', '/converter']) {
       const html = await (await fetch(`${baseUrl}${page}`)).text();
-      assert.match(html, /<a href="\/"/, `${page} links to basic`);
-      assert.match(html, /<a href="\/scientific"/, `${page} links to scientific`);
+      for (const link of ['/', '/basic', '/scientific', '/converter']) {
+        assert.ok(html.includes(`href="${link}"`), `${page} links to ${link}`);
+      }
     }
+  });
+
+  test('converts units', async () => {
+    const res = await fetch(`${baseUrl}/convert?value=100&from=c&to=f`);
+    assert.deepStrictEqual(await res.json(), { result: 212 });
+  });
+
+  test('returns 400 for invalid conversions', async () => {
+    for (const query of ['value=1&from=km&to=kg', 'value=&from=km&to=mi', 'value=abc&from=km&to=mi']) {
+      const res = await fetch(`${baseUrl}/convert?${query}`);
+      assert.strictEqual(res.status, 400, query);
+    }
+  });
+
+  test('lists units', async () => {
+    const units = await (await fetch(`${baseUrl}/units`)).json();
+    assert.deepStrictEqual(Object.keys(units), ['length', 'weight', 'temperature']);
   });
 
   test('unknown pages return 404 with links back', async () => {
@@ -124,7 +151,9 @@ describe('HTTP server', () => {
     assert.strictEqual(res.status, 404);
     const html = await res.text();
     assert.match(html, /Page not found/);
-    assert.match(html, /href="\/scientific"/);
+    for (const link of ['/', '/basic', '/scientific', '/converter']) {
+      assert.ok(html.includes(`href="${link}"`), link);
+    }
   });
 
   test('returns 400 when dividing by zero', async () => {

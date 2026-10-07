@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Unit Converter</title>
+  <style>
+    :root {
+      --bg: #f2f3f5;
+      --panel: #ffffff;
+      --text: #1d2129;
+      --muted: #6b7280;
+      --key: #eef0f3;
+      --key-hover: #e2e5ea;
+      --op: #2563eb;
+      --op-text: #ffffff;
+      --border: #d9dde3;
+      --error: #dc2626;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f1115;
+        --panel: #1a1d23;
+        --text: #f3f4f6;
+        --muted: #9ca3af;
+        --key: #262a32;
+        --key-hover: #30353f;
+        --op: #3b82f6;
+        --border: #353a45;
+        --error: #f87171;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    .calc {
+      width: 100%;
+      max-width: 400px;
+      background: var(--panel);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+    }
+    .home {
+      display: inline-block;
+      margin-bottom: 10px;
+      font-size: 14px;
+      color: var(--muted);
+      text-decoration: none;
+    }
+    .home:hover { color: var(--text); }
+    .tabs {
+      display: flex;
+      gap: 4px;
+      padding: 4px;
+      margin-bottom: 8px;
+      border-radius: 12px;
+      background: var(--key);
+    }
+    .tabs a {
+      flex: 1;
+      padding: 8px 0;
+      border-radius: 9px;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--muted);
+      text-decoration: none;
+    }
+    .tabs a:hover { color: var(--text); }
+    .tabs a[aria-current="page"] {
+      background: var(--op);
+      color: var(--op-text);
+    }
+    .categories {
+      display: flex;
+      gap: 8px;
+      margin: 16px 0;
+    }
+    .categories button {
+      flex: 1;
+      padding: 10px 0;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: transparent;
+      color: var(--text);
+      font: inherit;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    .categories button:hover { background: var(--key-hover); }
+    .categories button[aria-pressed="true"] {
+      border-color: var(--op);
+      color: var(--op);
+      font-weight: 600;
+    }
+    label {
+      display: block;
+      margin: 0 0 6px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .row { display: flex; gap: 8px; }
+    input, select {
+      min-width: 0;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--panel);
+      color: var(--text);
+      font: inherit;
+      font-size: 18px;
+    }
+    input { flex: 1; }
+    select { flex: 1; font-size: 16px; }
+    .output {
+      flex: 1;
+      min-width: 0;
+      padding: 12px;
+      border-radius: 10px;
+      background: var(--key);
+      font-size: 18px;
+      font-weight: 600;
+      overflow-wrap: anywhere;
+    }
+    .output.error { color: var(--error); font-size: 14px; font-weight: 400; }
+    .swap {
+      display: block;
+      margin: 12px auto;
+      width: 44px;
+      height: 44px;
+      border: 0;
+      border-radius: 50%;
+      background: var(--key);
+      color: var(--text);
+      font-size: 20px;
+      cursor: pointer;
+    }
+    .swap:hover { background: var(--key-hover); }
+  </style>
+</head>
+<body>
+  <main class="calc">
+    <a class="home" href="/">← Home</a>
+    <nav class="tabs" aria-label="Tools">
+      <a href="/basic">Basic</a>
+      <a href="/scientific">Scientific</a>
+      <a href="/converter" aria-current="page">Converter</a>
+    </nav>
+
+    <div class="categories" id="categories"></div>
+
+    <label for="value">From</label>
+    <div class="row">
+      <input id="value" type="number" inputmode="decimal" value="1" aria-label="Value">
+      <select id="from" aria-label="From unit"></select>
+    </div>
+
+    <button class="swap" id="swap" title="Swap units" aria-label="Swap units">⇅</button>
+
+    <label for="to">To</label>
+    <div class="row">
+      <div class="output" id="output" aria-live="polite">…</div>
+      <select id="to" aria-label="To unit"></select>
+    </div>
+  </main>
+
+  <script>
+    // Unit lists and conversions come from the server (/units and /convert)
+    const DEFAULT_PAIRS = { length: ['km', 'mi'], weight: ['kg', 'lb'], temperature: ['c', 'f'] };
+
+    const categoriesEl = document.getElementById('categories');
+    const valueEl = document.getElementById('value');
+    const fromEl = document.getElementById('from');
+    const toEl = document.getElementById('to');
+    const outputEl = document.getElementById('output');
+
+    let units = {};
+    let category = 'length';
+    let requestId = 0;
+
+    function showOutput(text, error) {
+      outputEl.classList.toggle('error', Boolean(error));
+      outputEl.textContent = text;
+    }
+
+    function fillSelect(select, selected) {
+      select.innerHTML = '';
+      for (const [code, unit] of Object.entries(units[category].units)) {
+        select.add(new Option(`${unit.label} (${code})`, code, false, code === selected));
+      }
+    }
+
+    function selectCategory(name) {
+      category = name;
+      for (const btn of categoriesEl.children) {
+        btn.setAttribute('aria-pressed', String(btn.dataset.category === name));
+      }
+      const [from, to] = DEFAULT_PAIRS[name];
+      fillSelect(fromEl, from);
+      fillSelect(toEl, to);
+      update();
+    }
+
+    async function update() {
+      if (valueEl.value.trim() === '') return showOutput('Enter a value', true);
+      const id = ++requestId;   // ignore responses that arrive out of order
+      const params = new URLSearchParams({ value: valueEl.value, from: fromEl.value, to: toEl.value });
+      try {
+        const res = await fetch(`/convert?${params}`);
+        const data = await res.json();
+        if (id !== requestId) return;
+        if (!res.ok) throw new Error(data.error || 'Request failed');
+        showOutput(String(parseFloat(data.result.toPrecision(10))));
+      } catch (err) {
+        if (id === requestId) showOutput(err.message, true);
+      }
+    }
+
+    document.getElementById('swap').addEventListener('click', () => {
+      [fromEl.value, toEl.value] = [toEl.value, fromEl.value];
+      update();
+    });
+    valueEl.addEventListener('input', update);
+    fromEl.addEventListener('change', update);
+    toEl.addEventListener('change', update);
+
+    fetch('/units')
+      .then(res => res.json())
+      .then(data => {
+        units = data;
+        for (const [name, info] of Object.entries(units)) {
+          const btn = document.createElement('button');
+          btn.textContent = info.label;
+          btn.dataset.category = name;
+          btn.addEventListener('click', () => selectCategory(name));
+          categoriesEl.append(btn);
+        }
+        selectCategory(category);
+      })
+      .catch(() => showOutput('Could not load units', true));
+  </script>
+</body>
+</html>
