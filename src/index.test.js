@@ -1,6 +1,6 @@
-const { test, describe } = require('node:test');
+const { test, describe, before, after } = require('node:test');
 const assert = require('node:assert');
-const { add, subtract, multiply, divide } = require('./index.js');
+const { add, subtract, multiply, divide, server } = require('./index.js');
 
 describe('Calculator Functions', () => {
 
@@ -68,5 +68,34 @@ describe('Edge Cases', () => {
 
   test('handles decimal numbers', () => {
     assert.strictEqual(add(0.1, 0.2).toFixed(1), '0.3');
+  });
+});
+
+describe('HTTP server', () => {
+  let baseUrl;
+
+  before(async () => {
+    await new Promise(resolve => server.listen(0, resolve));
+    baseUrl = `http://localhost:${server.address().port}`;
+  });
+
+  after(() => server.close());
+
+  test('serves the calculator page at /', async () => {
+    const res = await fetch(`${baseUrl}/`);
+    assert.strictEqual(res.status, 200);
+    assert.match(res.headers.get('content-type'), /text\/html/);
+    assert.match(await res.text(), /<title>Calculator<\/title>/);
+  });
+
+  test('computes via the API', async () => {
+    const res = await fetch(`${baseUrl}/multiply?a=6&b=7`);
+    assert.deepStrictEqual(await res.json(), { result: 42 });
+  });
+
+  test('returns 400 when dividing by zero', async () => {
+    const res = await fetch(`${baseUrl}/divide?a=1&b=0`);
+    assert.strictEqual(res.status, 400);
+    assert.deepStrictEqual(await res.json(), { error: 'Cannot divide by zero' });
   });
 });

@@ -4,6 +4,11 @@
  */
 
 const http = require('http');
+const fs = require('fs');
+const path = require('path');
+
+// Web UI for the calculator
+const indexHtml = fs.readFileSync(path.join(__dirname, 'public', 'index.html'));
 
 // Calculator functions
 function add(a, b) {
@@ -32,6 +37,13 @@ const server = http.createServer((req, res) => {
   res.setHeader('Content-Type', 'application/json');
 
   if (url.pathname === '/') {
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.end(indexHtml);
+    return;
+  }
+
+  if (url.pathname === '/api') {
     res.statusCode = 200;
     res.end(JSON.stringify({
       message: 'Calculator API',

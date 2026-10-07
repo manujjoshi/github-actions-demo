@@ -76,34 +76,16 @@ jobs:
     environment: production     # Can require manual approval in GitHub settings
 
     steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: production-build
-          path: dist/
-
-      - name: Deploy to production
+      # Render pulls this commit from GitHub and builds it itself,
+      # so we only need to call the service's deploy hook.
+      # Set RENDER_DEPLOY_HOOK_URL in Settings > Secrets and variables > Actions
+      - name: Deploy to Render
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
-          echo "Deploying to production server..."
-          echo "Files to deploy:"
-          ls -la dist/
-          echo "Production deployment complete!"
-
-      # Example: Deploy to cloud providers
-      # Uncomment and configure as needed:
-
-      # - name: Deploy to Vercel
-      #   uses: amondnet/vercel-action@v20
-      #   with:
-      #     vercel-token: ${{ secrets.VERCEL_TOKEN }}
-      #     vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-      #     vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-      #     vercel-args: '--prod'
-
-      # - name: Deploy to AWS S3
-      #   uses: aws-actions/configure-aws-credentials@v4
-      #   with:
-      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     aws-region: us-east-1
-      # - run: aws s3 sync dist/ s3://my-bucket --delete
+          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then
+            echo "RENDER_DEPLOY_HOOK_URL secret is not set"
+            exit 1
+          fi
+          curl --fail --silent --show-error -X POST "$RENDER_DEPLOY_HOOK_URL&ref=${{ github.sha }}"
+          echo "Render deploy triggered for ${{ github.sha }}"

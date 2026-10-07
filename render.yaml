@@ -1,0 +1,12 @@
+# Render Blueprint - creates the web service on render.com
+# Deploys are triggered by .github/workflows/deploy.yml (autoDeploy is off),
+# so production only updates after tests pass.
+services:
+  - type: web
+    name: github-actions-demo
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: false

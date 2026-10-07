@@ -16,6 +16,8 @@ A complete demo project for learning GitHub Actions. This repository contains a 
 github-actions-demo/
 ├── src/
 │   ├── index.js          # Calculator API server
+│   ├── public/
+│   │   └── index.html    # Calculator web UI
 │   └── index.test.js     # Unit tests
 ├── .github/
 │   └── workflows/
@@ -41,6 +43,9 @@ npm test
 
 # Start the server
 npm start
+
+# Open the calculator UI
+# http://localhost:3000
 
 # Test the API
 curl http://localhost:3000/add?a=5&b=3
