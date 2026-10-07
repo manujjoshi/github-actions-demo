@@ -111,6 +111,22 @@ describe('HTTP server', () => {
     assert.deepStrictEqual(await res.json(), { error: 'Incomplete expression' });
   });
 
+  test('both pages link to each other', async () => {
+    for (const page of ['/', '/scientific']) {
+      const html = await (await fetch(`${baseUrl}${page}`)).text();
+      assert.match(html, /<a href="\/"/, `${page} links to basic`);
+      assert.match(html, /<a href="\/scientific"/, `${page} links to scientific`);
+    }
+  });
+
+  test('unknown pages return 404 with links back', async () => {
+    const res = await fetch(`${baseUrl}/no-such-page`);
+    assert.strictEqual(res.status, 404);
+    const html = await res.text();
+    assert.match(html, /Page not found/);
+    assert.match(html, /href="\/scientific"/);
+  });
+
   test('returns 400 when dividing by zero', async () => {
     const res = await fetch(`${baseUrl}/divide?a=1&b=0`);
     assert.strictEqual(res.status, 400);

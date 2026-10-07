@@ -53,15 +53,29 @@
       padding: 20px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
     }
-    .top {
+    .tabs {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 14px;
-      color: var(--muted);
+      gap: 4px;
+      padding: 4px;
+      margin-bottom: 8px;
+      border-radius: 12px;
+      background: var(--key);
     }
-    .top a { color: var(--op); text-decoration: none; }
-    .top a:hover { text-decoration: underline; }
+    .tabs a {
+      flex: 1;
+      padding: 8px 0;
+      border-radius: 9px;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--muted);
+      text-decoration: none;
+    }
+    .tabs a:hover { color: var(--text); }
+    .tabs a[aria-current="page"] {
+      background: var(--op);
+      color: var(--op-text);
+    }
     .screen { padding: 8px 4px 14px; }
     .expr {
       width: 100%;
@@ -113,10 +127,10 @@
 </head>
 <body>
   <main class="calc" id="calc">
-    <div class="top">
-      <span>Scientific</span>
-      <a href="/">Basic calculator</a>
-    </div>
+    <nav class="tabs" aria-label="Calculators">
+      <a href="/">Basic</a>
+      <a href="/scientific" aria-current="page">Scientific</a>
+    </nav>
     <div class="screen">
       <input class="expr" id="expr" type="text" autocomplete="off" spellcheck="false"
              aria-label="Expression" placeholder="0">

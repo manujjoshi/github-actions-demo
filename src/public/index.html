@@ -51,14 +51,29 @@
       padding: 20px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
     }
-    .top {
+    .tabs {
       display: flex;
-      justify-content: space-between;
-      font-size: 14px;
-      color: var(--muted);
+      gap: 4px;
+      padding: 4px;
+      margin-bottom: 8px;
+      border-radius: 12px;
+      background: var(--key);
     }
-    .top a { color: var(--op); text-decoration: none; }
-    .top a:hover { text-decoration: underline; }
+    .tabs a {
+      flex: 1;
+      padding: 8px 0;
+      border-radius: 9px;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--muted);
+      text-decoration: none;
+    }
+    .tabs a:hover { color: var(--text); }
+    .tabs a[aria-current="page"] {
+      background: var(--op);
+      color: var(--op-text);
+    }
     .screen {
       text-align: right;
       padding: 8px 4px 16px;
@@ -105,10 +120,10 @@
 </head>
 <body>
   <main class="calc" id="calc">
-    <div class="top">
-      <span>Basic</span>
-      <a href="/scientific">Scientific calculator</a>
-    </div>
+    <nav class="tabs" aria-label="Calculators">
+      <a href="/" aria-current="page">Basic</a>
+      <a href="/scientific">Scientific</a>
+    </nav>
     <div class="screen" aria-live="polite">
       <div class="expr" id="expr"></div>
       <div class="value" id="value">0</div>

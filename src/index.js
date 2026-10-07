@@ -11,6 +11,26 @@ const { evaluate } = require('./scientific');
 // Web UI for the calculators
 const indexHtml = fs.readFileSync(path.join(__dirname, 'public', 'index.html'));
 const scientificHtml = fs.readFileSync(path.join(__dirname, 'public', 'scientific.html'));
+const notFoundHtml = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Page not found</title>
+  <style>
+    body { font-family: system-ui, sans-serif; text-align: center; padding: 64px 16px; }
+    a { color: #2563eb; margin: 0 8px; font-size: 18px; }
+    @media (prefers-color-scheme: dark) {
+      body { background: #0f1115; color: #f3f4f6; }
+      a { color: #60a5fa; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Page not found</h1>
+  <p><a href="/">Basic calculator</a> <a href="/scientific">Scientific calculator</a></p>
+</body>
+</html>`;
 
 // Calculator functions
 function add(a, b) {
@@ -83,6 +103,17 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  const operations = { '/add': add, '/subtract': subtract, '/multiply': multiply, '/divide': divide };
+  const operation = operations[url.pathname];
+
+  // Unknown address: show a page with links back to the calculators
+  if (!operation) {
+    res.statusCode = 404;
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.end(notFoundHtml);
+    return;
+  }
+
   const a = parseFloat(url.searchParams.get('a'));
   const b = parseFloat(url.searchParams.get('b'));
 
@@ -93,25 +124,7 @@ const server = http.createServer((req, res) => {
   }
 
   try {
-    let result;
-    switch (url.pathname) {
-      case '/add':
-        result = add(a, b);
-        break;
-      case '/subtract':
-        result = subtract(a, b);
-        break;
-      case '/multiply':
-        result = multiply(a, b);
-        break;
-      case '/divide':
-        result = divide(a, b);
-        break;
-      default:
-        res.statusCode = 404;
-        res.end(JSON.stringify({ error: 'Not found' }));
-        return;
-    }
+    const result = operation(a, b);
     res.statusCode = 200;
     res.end(JSON.stringify({ result }));
   } catch (error) {
