@@ -16,8 +16,10 @@ A complete demo project for learning GitHub Actions. This repository contains a 
 github-actions-demo/
 ├── src/
 │   ├── index.js          # Calculator API server
+│   ├── scientific.js     # Scientific expression evaluator
 │   ├── public/
-│   │   └── index.html    # Calculator web UI
+│   │   ├── index.html       # Basic calculator UI
+│   │   └── scientific.html  # Scientific calculator UI
 │   └── index.test.js     # Unit tests
 ├── .github/
 │   └── workflows/
@@ -45,10 +47,12 @@ npm test
 npm start
 
 # Open the calculator UI
-# http://localhost:3000
+# http://localhost:3000             (basic)
+# http://localhost:3000/scientific  (scientific)
 
 # Test the API
 curl http://localhost:3000/add?a=5&b=3
+curl "http://localhost:3000/evaluate?expr=2*sin(30)%2B5!&angle=deg"
 ```
 
 ## Video Walkthrough

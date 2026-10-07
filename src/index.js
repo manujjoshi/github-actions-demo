@@ -6,9 +6,11 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const { evaluate } = require('./scientific');
 
-// Web UI for the calculator
+// Web UI for the calculators
 const indexHtml = fs.readFileSync(path.join(__dirname, 'public', 'index.html'));
+const scientificHtml = fs.readFileSync(path.join(__dirname, 'public', 'scientific.html'));
 
 // Calculator functions
 function add(a, b) {
@@ -43,12 +45,34 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (url.pathname === '/scientific') {
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.end(scientificHtml);
+    return;
+  }
+
+  // Scientific expressions: /evaluate?expr=2sin(30)&angle=deg
+  if (url.pathname === '/evaluate') {
+    try {
+      const result = evaluate(url.searchParams.get('expr') || '', {
+        angle: url.searchParams.get('angle') || 'rad'
+      });
+      res.statusCode = 200;
+      res.end(JSON.stringify({ result }));
+    } catch (error) {
+      res.statusCode = 400;
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return;
+  }
+
   if (url.pathname === '/api') {
     res.statusCode = 200;
     res.end(JSON.stringify({
       message: 'Calculator API',
-      version: '1.1.0',
-      endpoints: ['/add', '/subtract', '/multiply', '/divide']
+      version: '1.2.0',
+      endpoints: ['/add', '/subtract', '/multiply', '/divide', '/evaluate']
     }));
     return;
   }

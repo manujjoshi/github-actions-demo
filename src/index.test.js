@@ -93,6 +93,24 @@ describe('HTTP server', () => {
     assert.deepStrictEqual(await res.json(), { result: 42 });
   });
 
+  test('serves the scientific calculator page', async () => {
+    const res = await fetch(`${baseUrl}/scientific`);
+    assert.strictEqual(res.status, 200);
+    assert.match(await res.text(), /<title>Scientific Calculator<\/title>/);
+  });
+
+  test('evaluates scientific expressions', async () => {
+    const expr = encodeURIComponent('2sin(30)+√(16)');
+    const res = await fetch(`${baseUrl}/evaluate?expr=${expr}&angle=deg`);
+    assert.deepStrictEqual(await res.json(), { result: 5 });
+  });
+
+  test('returns 400 for invalid expressions', async () => {
+    const res = await fetch(`${baseUrl}/evaluate?expr=2%2B`);
+    assert.strictEqual(res.status, 400);
+    assert.deepStrictEqual(await res.json(), { error: 'Incomplete expression' });
+  });
+
   test('returns 400 when dividing by zero', async () => {
     const res = await fetch(`${baseUrl}/divide?a=1&b=0`);
     assert.strictEqual(res.status, 400);

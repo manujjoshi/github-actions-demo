@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Scientific Calculator</title>
+  <style>
+    :root {
+      --bg: #f2f3f5;
+      --panel: #ffffff;
+      --text: #1d2129;
+      --muted: #6b7280;
+      --key: #eef0f3;
+      --key-hover: #e2e5ea;
+      --op: #2563eb;
+      --op-hover: #1d4ed8;
+      --op-text: #ffffff;
+      --fn: #dde1e7;
+      --sci: #e6ebf5;
+      --error: #dc2626;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f1115;
+        --panel: #1a1d23;
+        --text: #f3f4f6;
+        --muted: #9ca3af;
+        --key: #262a32;
+        --key-hover: #30353f;
+        --op: #3b82f6;
+        --op-hover: #2563eb;
+        --fn: #353a45;
+        --sci: #222936;
+        --error: #f87171;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    .calc {
+      width: 100%;
+      max-width: 400px;
+      background: var(--panel);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+    }
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      color: var(--muted);
+    }
+    .top a { color: var(--op); text-decoration: none; }
+    .top a:hover { text-decoration: underline; }
+    .screen { padding: 8px 4px 14px; }
+    .expr {
+      width: 100%;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: var(--text);
+      font: inherit;
+      font-size: 26px;
+      text-align: right;
+      padding: 6px 0;
+    }
+    .value {
+      text-align: right;
+      color: var(--muted);
+      font-size: 20px;
+      min-height: 26px;
+      overflow-wrap: anywhere;
+    }
+    .value.error { color: var(--error); font-size: 16px; }
+    .keys {
+      display: grid;
+      gap: 8px;
+    }
+    .sci { grid-template-columns: repeat(5, 1fr); margin-bottom: 8px; }
+    .num { grid-template-columns: repeat(4, 1fr); }
+    button {
+      font: inherit;
+      font-size: 20px;
+      height: 54px;
+      border: 0;
+      border-radius: 12px;
+      background: var(--key);
+      color: var(--text);
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    button:hover { background: var(--key-hover); }
+    button:active { transform: scale(0.97); }
+    .sci button { background: var(--sci); font-size: 16px; height: 44px; }
+    .sci button:hover { background: var(--key-hover); }
+    button.fn { background: var(--fn); font-size: 18px; }
+    button.op { background: var(--op); color: var(--op-text); }
+    button.op:hover { background: var(--op-hover); }
+    button.wide { grid-column: span 2; }
+    #angle { font-weight: 600; color: var(--op); }
+    .busy button { opacity: 0.7; pointer-events: none; }
+  </style>
+</head>
+<body>
+  <main class="calc" id="calc">
+    <div class="top">
+      <span>Scientific</span>
+      <a href="/">Basic calculator</a>
+    </div>
+    <div class="screen">
+      <input class="expr" id="expr" type="text" autocomplete="off" spellcheck="false"
+             aria-label="Expression" placeholder="0">
+      <div class="value" id="value" aria-live="polite"></div>
+    </div>
+
+    <div class="keys sci">
+      <button id="angle" data-action="angle" title="Angle unit">DEG</button>
+      <button data-insert="(">(</button>
+      <button data-insert=")">)</button>
+      <button data-insert="^2">x²</button>
+      <button data-insert="^">xʸ</button>
+
+      <button data-insert="sin(">sin</button>
+      <button data-insert="cos(">cos</button>
+      <button data-insert="tan(">tan</button>
+      <button data-insert="√(">√</button>
+      <button data-insert="!">n!</button>
+
+      <button data-insert="asin(">sin⁻¹</button>
+      <button data-insert="acos(">cos⁻¹</button>
+      <button data-insert="atan(">tan⁻¹</button>
+      <button data-insert="ln(">ln</button>
+      <button data-insert="log(">log</button>
+
+      <button data-insert="π">π</button>
+      <button data-insert="e">e</button>
+      <button data-insert="abs(">|x|</button>
+      <button data-insert="exp(">eˣ</button>
+      <button data-insert="Ans">Ans</button>
+    </div>
+
+    <div class="keys num">
+      <button class="fn wide" data-action="clear">AC</button>
+      <button class="fn" data-action="backspace">⌫</button>
+      <button class="op" data-insert="÷">÷</button>
+
+      <button data-insert="7">7</button>
+      <button data-insert="8">8</button>
+      <button data-insert="9">9</button>
+      <button class="op" data-insert="×">×</button>
+
+      <button data-insert="4">4</button>
+      <button data-insert="5">5</button>
+      <button data-insert="6">6</button>
+      <button class="op" data-insert="−">−</button>
+
+      <button data-insert="1">1</button>
+      <button data-insert="2">2</button>
+      <button data-insert="3">3</button>
+      <button class="op" data-insert="+">+</button>
+
+      <button data-insert="0">0</button>
+      <button data-insert=".">.</button>
+      <button class="op wide" data-action="equals">=</button>
+    </div>
+  </main>
+
+  <script>
+    // Expressions are evaluated by the server's /evaluate endpoint
+    const calcEl = document.getElementById('calc');
+    const exprEl = document.getElementById('expr');
+    const valueEl = document.getElementById('value');
+    const angleEl = document.getElementById('angle');
+
+    let angle = 'deg';
+    let ans = 0;          // last result, used by the Ans key
+    let justEvaluated = false;
+    let busy = false;
+
+    function showResult(text, error) {
+      valueEl.classList.toggle('error', Boolean(error));
+      valueEl.textContent = text;
+    }
+
+    function insert(text) {
+      // After "=", an operator continues from the result; anything else starts fresh
+      if (justEvaluated) {
+        exprEl.value = /^[-+*/−×÷^!]/.test(text) ? 'Ans' : '';
+        justEvaluated = false;
+      }
+      const start = exprEl.selectionStart ?? exprEl.value.length;
+      const end = exprEl.selectionEnd ?? exprEl.value.length;
+      exprEl.value = exprEl.value.slice(0, start) + text + exprEl.value.slice(end);
+      const caret = start + text.length;
+      exprEl.setSelectionRange(caret, caret);
+    }
+
+    function backspace() {
+      justEvaluated = false;
+      const start = exprEl.selectionStart ?? exprEl.value.length;
+      const end = exprEl.selectionEnd ?? exprEl.value.length;
+      if (start !== end) {
+        exprEl.value = exprEl.value.slice(0, start) + exprEl.value.slice(end);
+        exprEl.setSelectionRange(start, start);
+      } else if (start > 0) {
+        exprEl.value = exprEl.value.slice(0, start - 1) + exprEl.value.slice(start);
+        exprEl.setSelectionRange(start - 1, start - 1);
+      }
+    }
+
+    function clearAll() {
+      exprEl.value = '';
+      justEvaluated = false;
+      showResult('');
+    }
+
+    function toggleAngle() {
+      angle = angle === 'deg' ? 'rad' : 'deg';
+      angleEl.textContent = angle.toUpperCase();
+    }
+
+    async function equals() {
+      const raw = exprEl.value.trim();
+      if (!raw) return;
+      const expr = raw.replace(/Ans/g, `(${ans})`);
+
+      busy = true;
+      calcEl.classList.add('busy');
+      try {
+        const res = await fetch(`/evaluate?expr=${encodeURIComponent(expr)}&angle=${angle}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Request failed');
+        ans = parseFloat(data.result.toPrecision(12));
+        showResult(`${raw} =`);
+        exprEl.value = String(ans);
+        justEvaluated = true;
+      } catch (err) {
+        showResult(err.message, true);
+      } finally {
+        busy = false;
+        calcEl.classList.remove('busy');
+      }
+    }
+
+    document.querySelectorAll('.keys').forEach(keys => keys.addEventListener('click', e => {
+      const btn = e.target.closest('button');
+      if (!btn || busy) return;
+      const action = btn.dataset.action;
+      if (btn.dataset.insert !== undefined) insert(btn.dataset.insert);
+      else if (action === 'equals') equals();
+      else if (action === 'clear') clearAll();
+      else if (action === 'backspace') backspace();
+      else if (action === 'angle') toggleAngle();
+    }));
+
+    exprEl.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === '=') {
+        e.preventDefault();
+        if (!busy) equals();
+      } else if (e.key === 'Escape') {
+        clearAll();
+      } else if (justEvaluated && e.key.length === 1) {
+        // Typing after a result behaves like the keypad
+        e.preventDefault();
+        insert(e.key);
+      }
+    });
+    exprEl.addEventListener('input', () => { justEvaluated = false; });
+
+    // Focus for keyboard typing, but don't pop up the on-screen keyboard on phones
+    if (matchMedia('(pointer: fine)').matches) exprEl.focus();
+  </script>
+</body>
+</html>

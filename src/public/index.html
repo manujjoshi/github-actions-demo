@@ -51,6 +51,14 @@
       padding: 20px;
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
     }
+    .top {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      color: var(--muted);
+    }
+    .top a { color: var(--op); text-decoration: none; }
+    .top a:hover { text-decoration: underline; }
     .screen {
       text-align: right;
       padding: 8px 4px 16px;
@@ -97,6 +105,10 @@
 </head>
 <body>
   <main class="calc" id="calc">
+    <div class="top">
+      <span>Basic</span>
+      <a href="/scientific">Scientific calculator</a>
+    </div>
     <div class="screen" aria-live="polite">
       <div class="expr" id="expr"></div>
       <div class="value" id="value">0</div>
