@@ -74,6 +74,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: deploy-staging
     environment: production     # Can require manual approval in GitHub settings
+    env:
+      SERVICE_URL: https://github-actions-demo-5wtd.onrender.com
 
     steps:
       # Render pulls this commit from GitHub and builds it itself,
@@ -87,5 +89,22 @@ jobs:
             echo "RENDER_DEPLOY_HOOK_URL secret is not set"
             exit 1
           fi
-          curl --fail --silent --show-error -X POST "$RENDER_DEPLOY_HOOK_URL&ref=${{ github.sha }}"
-          echo "Render deploy triggered for ${{ github.sha }}"
+          echo "Render response:"
+          curl --fail --silent --show-error -X POST "$RENDER_DEPLOY_HOOK_URL"
+          echo
+
+      # The hook only queues a deploy, so wait until the live site
+      # reports this commit (Render sets RENDER_GIT_COMMIT in the app)
+      - name: Verify deployment is live
+        run: |
+          for attempt in $(seq 1 45); do
+            live=$(curl --silent --max-time 60 "$SERVICE_URL/api" | jq -r '.commit // "unknown"' 2>/dev/null || echo unreachable)
+            if [ "$live" = "${{ github.sha }}" ]; then
+              echo "Live at $SERVICE_URL with commit $live"
+              exit 0
+            fi
+            echo "Attempt $attempt: live commit is $live, waiting..."
+            sleep 20
+          done
+          echo "::error::$SERVICE_URL did not switch to ${{ github.sha }} within 15 minutes. Check the service's Events tab on Render."
+          exit 1

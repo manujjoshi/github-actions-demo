@@ -117,6 +117,8 @@ const server = http.createServer((req, res) => {
     res.end(JSON.stringify({
       message: 'Calculator API',
       version: '1.3.0',
+      // Set by Render at runtime; lets the deploy workflow confirm what's live
+      commit: process.env.RENDER_GIT_COMMIT || null,
       endpoints: ['/add', '/subtract', '/multiply', '/divide', '/evaluate', '/convert', '/units']
     }));
     return;
