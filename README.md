@@ -2,6 +2,8 @@
 
 A basic calculator, scientific calculator and unit converter served by a small Node.js server, tested and deployed to [Render](https://render.com) with GitHub Actions.
 
+**Live demo:** https://github-actions-demo-5wtd.onrender.com
+
 Forked from [shazforiot/github-actions-demo](https://github.com/shazforiot/github-actions-demo).
 
 ## Project Structure
